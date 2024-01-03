@@ -1,6 +1,7 @@
 from .exceptions import *
 from .structure import *
 from crccheck.crc import CrcXmodem
+import re
 
 crc_checker = CrcXmodem()
 
@@ -50,19 +51,8 @@ class UnpackerBase(object):
         :param buffer: buffer object.
         :return: Index of next valid start byte. Returns -1 if no valid start bytes are found.
         """
-        if len(buffer) < 2: # too short to find next
-            return -1
-        next_short_sb = buffer[1:].find(b'\x02')
-        next_long_sb= buffer[1:].find(b'\x03')
-        possible_index = []
-        if next_short_sb >= 0: # exclude index zero's as we know the current first packet is corrupt
-            possible_index.append(next_short_sb + 1) # +1 because we want found from second byte
-        if next_long_sb >= 0:
-            possible_index.append(next_long_sb + 1)
-        if possible_index == []:
-            return -1
-        else:
-            return min(possible_index)
+        possible_index = [match.start() for match in list(re.finditer(b'\x02', buffer)) + list(re.finditer(b'\x03', buffer))]
+        return sorted(possible_index)
 
     @staticmethod
     def _consume_after_corruption_detected(buffer):
@@ -127,39 +117,30 @@ class UnpackerBase(object):
         :param errors: specifies error handling scheme. see codec error handling schemes
         :return: (1) Packet if parse was successful, None otherwise, (2) Length consumed of buffer
         """
-        while True:
+        indices = UnpackerBase._next_possible_packet_index(buffer)
+        for index in indices:
             try:
+                ubuffer = buffer[index:]
                 # if we were not given a header then try to parse one
                 if header is None:
-                    header = UnpackerBase._unpack_header(buffer)
+                    header = UnpackerBase._unpack_header(ubuffer)
                 if header is None:
-                    # buffer is too short to parse a header
-                    if recovery_mode:
-                        return Stateless._recovery_recurse(buffer, header, errors, False)
-                    else:
-                        return None, 0
+                    continue
                 # check if a packet is parsable
-                if UnpackerBase._packet_parsable(buffer, header) is False:
-                    # buffer is too short to parse the rest of the packet
-                    if recovery_mode:
-                        return Stateless._recovery_recurse(buffer, header, errors, False)
-                    else:
-                        return None, 0
+                if UnpackerBase._packet_parsable(ubuffer, header) is False:
+                    continue
                 # parse the packet
-                payload = UnpackerBase._unpack_payload(buffer, header)
-                footer = UnpackerBase._unpack_footer(buffer, header)
+                payload = UnpackerBase._unpack_payload(ubuffer, header)
+                footer = UnpackerBase._unpack_footer(ubuffer, header)
                 # validate the payload
                 UnpackerBase._validate_payload(payload, footer)
                 # clean header as we wont need it again
                 consumed = UnpackerBase._packet_size(header)
                 header = None
-                return payload, consumed
+                return payload, index + consumed
             except CorruptPacket as corrupt_packet:
-                if errors is 'ignore':
-                    # find the next possible start byte in the buffer
-                    return Stateless._recovery_recurse(buffer, header, errors, True)
-                elif errors is 'strict':
-                    raise corrupt_packet
+                continue
+        return None, 0
 
     @staticmethod
     def _recovery_recurse(buffer, header, errors, consume_on_not_recovered):

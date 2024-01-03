@@ -14,7 +14,7 @@ class VESCMessage(type):
     _endian_fmt = '!'
     _id_fmt = 'B'
     _can_id_fmt = 'BB'
-    _comm_forward_can = 33
+    _comm_forward_can = 34
     _entry_msg_registry = None
 
     def __init__(cls, name, bases, clsdict):
@@ -72,6 +72,7 @@ class VESCMessage(type):
     @staticmethod
     def unpack(msg_bytes):
         msg_id = struct.unpack_from(VESCMessage._endian_fmt + VESCMessage._id_fmt, msg_bytes, 0)
+        can_id = struct.unpack_from(VESCMessage._endian_fmt + VESCMessage._can_id_fmt + VESCMessage._id_fmt, msg_bytes, 0)
         msg_type = VESCMessage.msg_type(*msg_id)
         data = None
         if not (msg_type._string_field is None):
