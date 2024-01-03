@@ -142,28 +142,6 @@ class UnpackerBase(object):
                 continue
         return None, 0
 
-    @staticmethod
-    def _recovery_recurse(buffer, header, errors, consume_on_not_recovered):
-        header = None  # clean header
-        next_sb = UnpackerBase._next_possible_packet_index(buffer)
-        if next_sb == -1:  # no valid start byte in buffer. consume entire buffer
-            if consume_on_not_recovered:
-                return None, len(buffer)
-            else:
-                return None, 0
-        else:
-            payload, consumed = UnpackerBase._unpack(buffer[next_sb:], header, errors, True)
-            if payload is None:
-                # failed to recover
-                if consume_on_not_recovered:
-                    return payload, consumed + next_sb
-                else:
-                    return payload, consumed
-            else:
-                # recovery was successful
-                return payload, consumed + next_sb
-
-
 
 class PackerBase(object):
     """
