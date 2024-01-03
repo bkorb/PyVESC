@@ -72,7 +72,6 @@ class VESCMessage(type):
     @staticmethod
     def unpack(msg_bytes):
         msg_id = struct.unpack_from(VESCMessage._endian_fmt + VESCMessage._id_fmt, msg_bytes, 0)
-        can_id = struct.unpack_from(VESCMessage._endian_fmt + VESCMessage._can_id_fmt + VESCMessage._id_fmt, msg_bytes, 0)
         msg_type = VESCMessage.msg_type(*msg_id)
         data = None
         if not (msg_type._string_field is None):
