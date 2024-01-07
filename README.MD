@@ -1,4 +1,4 @@
-# PyVESC [![Build Status](https://travis-ci.org/LiamBindle/PyVESC.svg?branch=master)](https://travis-ci.org/LiamBindle/PyVESC) [![Documentation Status](https://readthedocs.org/projects/pyvesc/badge/?version=latest)](http://pyvesc.readthedocs.io/en/latest/?badge=latest)
+# PyVESC (Updated by Brandon Korb) [![Build Status](https://travis-ci.org/LiamBindle/PyVESC.svg?branch=master)](https://travis-ci.org/LiamBindle/PyVESC) [![Documentation Status](https://readthedocs.org/projects/pyvesc/badge/?version=latest)](http://pyvesc.readthedocs.io/en/latest/?badge=latest)
 PyVESC is aimed at being a easy to use and robust python implementation of the
 communication protocol used by the
 [VESC - Open Source ESC](http://vedder.se/2015/01/vesc-open-source-esc/) by
